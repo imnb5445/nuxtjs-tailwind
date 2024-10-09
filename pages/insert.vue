@@ -27,7 +27,7 @@
 
         <div v-for="(episode, index) in nama_episode" :key="index">
             <input type="text" class="input_nama_karakter" v-model="nama_episode[index]">
-            <input type="text" class="input_nama_karakter" v-model="episode_url[index]">
+            <input type="url" class="input_nama_karakter" v-model="episode_url[index]">
             
         </div>
         <input type="submit">
