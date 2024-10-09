@@ -111,6 +111,8 @@
     };
 
 
+    
+
     //Select Function
     async function FecthDataGenre() {
         const {data, error} = await supabase

@@ -6,6 +6,9 @@
         <img :src="show.cover" alt="" class="w-20 h-20 bg-cover">
         <p v-for=" genre in show.table_genre">{{ genre.nama_genre }}</p>
         <p v-for=" tempat in show.table_tempat_tayang">{{ tempat.nama_tempat_tayang }}</p>
+        <form @submit.prevent="FetchSeriesGenre(show.series_id)">
+            <input type="submit">
+        </form>
     </div>
 
     <form @submit.prevent="UpdateDataGenre">
@@ -18,6 +21,17 @@
     </form>
 
     <form action="">
+        <input type="text" v-model="searchInput" @input="SearchEventHandler">
+    </form>
+    <div v-for="result in seriesSearch" :key="result.series_id">
+        {{ result.nama_series }}
+    </div>
+
+
+    <p>{{ genre }}</p>
+    <p>{{ genresInput }}</p>
+    <p>{{ id_input }}</p>
+    <form action="">
         <input type="submit">
     </form>
 </template>
@@ -26,6 +40,8 @@
     const series = ref([])
     const genres = ref([])
     const genresInput = ref([])
+    const seriesSearch = ref([])
+    const searchInput=ref('')
     const id_input =  ref('')
     const series_id_input = 2
     const supabase = useSupabaseClient()
@@ -36,6 +52,30 @@
     // async function InsertData() {
     //     genres.forEach(InsertDataGenre);
     // }
+
+    async function SearchEventHandler(event){
+
+        if(searchInput.value.length < 2){
+            seriesSearch.value = []
+            return
+        }
+
+        const {data, error} = await supabase
+        .from('table_series')
+        .select()
+        .ilike('nama_series', `%${searchInput.value}%`);
+
+        if(error){
+            console.error("Error fetching data:", error.message);
+            seriesSearch.value = []; // Clear results on error
+        }
+        else{
+            seriesSearch.value = data
+        }
+
+    }
+
+   
 
 
     //update function
@@ -49,6 +89,7 @@
 
             if (error) {
                 alert('data Upserting failed')
+                return
             }
             
         }
@@ -70,7 +111,7 @@
             }
         }
 
-       
+       await FetchData()
     }
 
     // delete function
@@ -139,6 +180,17 @@
 
         genres.value = data
 
+    }
+
+    async function FetchSeriesGenre(x) {
+        const {data, error} = await supabase
+        .from('table_series_genre')
+        .select('genre_id')
+        .eq('series_id', x)
+
+        
+        genresInput.value = data.map(item => item.genre_id)
+        id_input.value = x
     }
 
     
