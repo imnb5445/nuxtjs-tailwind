@@ -55,6 +55,8 @@
         <input type="submit">
     </form>
     
+
+    <button @click="SignOutUser">Log Out</button>
     <p>{{ genresInput }}</p>
     <p>{{ tempatTayangInput }}</p>
     <p>{{ selected_img }}</p>
@@ -84,6 +86,11 @@
     const profilePreview = ref('')
     const img_name = ref('')
     const nama_series = ref('')
+
+    async function SignOutUser() {
+        const { error } = await supabase.auth.signOut()
+        reloadNuxtApp()
+    }
 
     //Event Handler
     const handleFileProfileChange = (event) => {
