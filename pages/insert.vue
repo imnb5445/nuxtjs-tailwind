@@ -32,15 +32,29 @@
         </div>
         <input type="submit">
     </form>
-    
+
     <div>
-        <button @click="removeInputKarakter(index)" class="bg-black text-white">Remove Karakter</button>
-    <button @click="addInputKarakter" class="bg-black text-white">Add Karakter</button>
+    <button @click="removeInputKarakter(index)" class="bg-black text-white m-5 p-3">Remove Karakter</button>
+    <button @click="addInputKarakter" class="bg-black text-white m-5 p-3">Add Karakter</button>
     </div>
     
 
-    <button @click="removeInputEpisode(index)" class="bg-black text-white">Remove episode</button>
-    <button @click="addInputepisode" class="bg-black text-white">Add episode</button>
+    <button @click="removeInputEpisode(index)" class="bg-black text-white m-5 p-3">Remove episode</button>
+    <button @click="addInputepisode" class="bg-black text-white m-5 p-3">Add episode</button>
+
+    <!-- insert Pemain -->
+    <form @submit.prevent="InsertBucketProfile">
+        <input type="text" v-model="namaPemain">
+        <input type="file" accept="image/png, image/jpeg" @change="handleFileProfileChange">
+        <img v-if="profilePreview" :src="profilePreview" alt="Image Preview" class="w-20 h-20 bg-cover"/>
+        <input type="submit">
+    </form>
+
+    <form @submit.prevent="InsertNewGenre">
+        <input type="text">
+        <input type="submit">
+    </form>
+    
     <p>{{ genresInput }}</p>
     <p>{{ tempatTayangInput }}</p>
     <p>{{ selected_img }}</p>
@@ -59,14 +73,34 @@
     const nama_karakter = ref([])
     const nama_episode = ref([])
     const episode_url = ref([])
+    const AddGenre = ref('')
+    const namaPemain = ref('')
     const imgurl= ref('')
     const imagePreview = ref('')
     const selected_img = ref('')
     const sinopsis_input = ref('')
+    const selectedProfile = ref('')
+    const profileName = ref('')
+    const profilePreview = ref('')
     const img_name = ref('')
     const nama_series = ref('')
 
     //Event Handler
+    const handleFileProfileChange = (event) => {
+        const file = event.target.files[0];
+            if (file) {
+                selectedProfile.value = file;
+                profileName.value = file.name;
+
+                // Create a preview URL
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                profilePreview.value = e.target.result; // Set the preview URL
+                };
+                reader.readAsDataURL(file); // Read the file as a data URL
+            }
+    };
+
     const handleFileChange = (event) => {
         const file = event.target.files[0];
             if (file) {
@@ -148,6 +182,16 @@
             await InsertDataSeries(data.publicUrl);
     }
 
+    async function FetchUrlProfile() {
+        const { data } = supabase.storage
+                .from('series_tumbnail')
+                .getPublicUrl(`profile/${selectedProfile.value.name}`); //the img url return ass null
+
+            // Now insert the series data
+            console.log(data)
+            await InsertDataActor(data.publicUrl);
+    }
+
   
 
     //Insert Function
@@ -174,6 +218,44 @@
             alert('Please select a file to upload.');
         }
     }
+
+    async function InsertBucketProfile(){
+        if (selectedProfile.value) {
+            const { data, error } = await supabase.storage
+            .from('series_tumbnail')
+            .upload(`profile/${selectedProfile.value.name}`, selectedProfile.value, {
+                cacheControl: '3600',
+                upsert: false,
+            });
+
+            if (error) {
+            console.error('Error uploading file:', error);
+            alert('Upload failed. Please try again.');
+            } else {
+            console.log('File uploaded successfully:', data);
+            alert('File uploaded successfully!');
+
+            FetchUrlProfile()
+            }
+        } else {
+            alert('Please select a file to upload.');
+        }
+    }
+
+    async function InsertDataActor(x){
+        const {error} = await supabase
+        .from('table_pemain')
+        .insert({nama_pemain : namaPemain.value, profile_pemain : x})
+
+        if(error){
+            console.error("Error insert data:", error.message);
+            seriesSearch.value = []; // Clear results on error
+        }
+        else{
+            seriesSearch.value = data
+        }
+    }
+
     async function InsertData() {
         await InsertBucketTumbnail();
     }
@@ -233,6 +315,12 @@
         await InsertDataTempat(seriesId)
         await InsertDataKarakter(seriesId)
         await InsertDataEpisode(seriesId)
+    }
+
+    async function InsertNewGenre() {
+        const {data, error} = await supabase
+        .from('table_genre')
+        .upsert({nama_genre : AddGenre.value})
     }
 
 
