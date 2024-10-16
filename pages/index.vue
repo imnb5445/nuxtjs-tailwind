@@ -6,19 +6,30 @@
         <img :src="show.cover" alt="" class="w-20 h-20 bg-cover" @click="SeriesGoTo(show.series_id)">
         <p v-for=" genre in show.table_genre">{{ genre.nama_genre }}</p>
         <p v-for=" tempat in show.table_tempat_tayang">{{ tempat.nama_tempat_tayang }}</p>
-        <form @submit.prevent="FetchSeriesGenre(show.series_id)">
+        <form @submit.prevent="FetchSeries(show.series_id)">
             <input type="submit">
         </form>
     </div>
 
-    <form @submit.prevent="UpdateDataGenre">
+    <div v-if="isEdting">
+        <form @submit.prevent="UpdateData" >
+        <p>Genre</p>
         <div v-for="genre in genres" :key="genre.genre_id">
             <input type="checkbox" name="checkbox" :value="genre.genre_id" v-model="genresInput">
             <label for="checkbox">{{ genre.nama_genre }}</label>
            
         </div>
+
+        <p>Tempat Tayang</p>
+        <div v-for=" tempat in tempatTayang" :key="tempat.tempat_tayang_id">
+            <input type="checkbox" name="checkbox" :value="tempat.tempat_tayang_id" v-model="tempatInput">
+            <label for="checkbox">{{ tempat.nama_tempat_tayang }}</label>
+           
+        </div>
         <input type="submit">
     </form>
+    </div>
+    
 
     <form action="">
         <input type="text" v-model="searchInput" @input="SearchEventHandler">
@@ -40,6 +51,8 @@
     const router = useRouter()
     const series = ref([])
     const genres = ref([])
+    const tempatTayang = ref([])
+    const tempatInput = ref([])
     const genresInput = ref([])
     const seriesSearch = ref([])
     const searchInput=ref('')
@@ -49,6 +62,7 @@
     const nama_series = ref('')
     const test = [1, 2]
     const test2 = 2
+    const isEdting = ref(false)
     // Navigation
     function  SeriesGoTo(id){
         router.push({ name: 'series-id', params: { id } });
@@ -80,6 +94,51 @@
 
 
     //update function
+
+    async function UpdateData() {
+        await UpdateDataGenre()
+        await UpdateDataTempat()
+
+        id_input = ''
+        isEdting = false
+    }
+
+    async function UpdateDataTempat() {
+        for( const tempat of tempatInput.value){
+            const {error} = await supabase
+            .from('table_series_tempat_tayang')
+            .upsert({series_id: id_input.value, tempat_tayang_id : tempat})
+            
+            console.log(tempat)
+
+            if (error) {
+                alert('data Upserting failed')
+                return
+            }
+
+           
+            
+        }
+
+        for(const tempatData of tempatTayang.value){
+            if(tempatInput.value.includes(tempatData.tempat_tayang_id)){
+                console.log(tempatData.tempat_tayang_id)
+            }
+            else{
+                const {error: deleteError} = await supabase
+                .from('table_series_tempat_tayang')
+                .delete()
+                .eq('series_id', id_input.value)
+                .eq('tempat_tayang_id', tempatData.tempat_tayang_id)
+                if(deleteError){
+                    console.error("Data selection failed:", error.message);
+                    alert("Data selection failed");
+                }
+            }
+        }
+        tempatInput = []
+        await FetchData()
+    }
     async function UpdateDataGenre() {
         for( const genre of genresInput.value){
             const {error} = await supabase
@@ -111,8 +170,8 @@
                 }
             }
         }
-
-       await FetchData()
+        genresInput = []
+        await FetchData()
     }
 
     // delete function Dont un comment this
@@ -183,6 +242,22 @@
 
     }
 
+    async function FetchDataTempat() {
+        const { data, error} = await supabase
+        .from('table_tempat_tayang')
+        .select()
+
+        tempatTayang.value = data
+
+    }
+
+    async function FetchSeries(x){
+        FetchSeriesGenre(x)
+        FetchSeriesTempat(x)
+        id_input.value = x
+        isEdting.value = true
+    }
+
     async function FetchSeriesGenre(x) {
         const {data, error} = await supabase
         .from('table_series_genre')
@@ -191,7 +266,17 @@
 
         
         genresInput.value = data.map(item => item.genre_id)
-        id_input.value = x
+    }
+
+    async function FetchSeriesTempat(x) {
+        const {data, error} = await supabase
+        .from('table_series_tempat_tayang')
+        .select('tempat_tayang_id')
+        .eq('series_id', x)
+
+        
+        tempatInput.value = data.map(item => item.tempat_tayang_id)
+
     }
 
     
@@ -199,6 +284,7 @@
     onMounted(() => {
         FetchData()
         FetchDataGenre()
+        FetchDataTempat()
     })
         
     
