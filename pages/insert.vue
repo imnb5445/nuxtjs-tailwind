@@ -75,6 +75,9 @@
     const nama_karakter = ref([])
     const nama_episode = ref([])
     const episode_url = ref([])
+    const selectedVideo = ref('')
+    const videoName = ref('')
+    const videoPreview = ref('')
     const AddGenre = ref('')
     const namaPemain = ref('')
     const imgurl= ref('')
@@ -93,6 +96,21 @@
     }
 
     //Event Handler
+    const handleFileVideoChange = (event) => {
+        const file = event.target.files[0];
+            if (file) {
+                selectedVideo.value = file;
+                videoName.value = file.name;
+
+                // Create a preview URL
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                videoPreview.value = e.target.result; // Set the preview URL
+                };
+                reader.readAsDataURL(file); // Read the file as a data URL
+            }
+    };
+
     const handleFileProfileChange = (event) => {
         const file = event.target.files[0];
             if (file) {
@@ -202,6 +220,30 @@
   
 
     //Insert Function
+    async function InsertBucketEpisode(){
+        if (selectedVideo.value) {
+            const { data, error } = await supabase.storage
+            .from('Video_Bucket')
+            .upload(`Episode/${selectedVideo.value.name}`, selectedVideo.value, {
+                cacheControl: '3600',
+                upsert: false,
+            });
+
+            if (error) {
+            console.error('Error uploading file:', error);
+            alert('Upload failed. Please try again.');
+            } else {
+            console.log('File uploaded successfully:', data);
+            alert('File uploaded successfully!');
+
+            // FetchUrl()
+           
+            }
+        } else {
+            alert('Please select a file to upload.');
+        }
+    }
+
     async function InsertBucketTumbnail(){
         if (selected_img.value) {
             const { data, error } = await supabase.storage

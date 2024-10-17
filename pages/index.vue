@@ -13,6 +13,11 @@
 
     <div v-if="isEdting">
         <form @submit.prevent="UpdateData" >
+        <label for="JudulInput">Judul</label>
+        <input type="text" name="JudulInput" v-model="judulInput">
+
+        <textarea name="sinopsis" v-model="sinopsisInput"></textarea>
+
         <p>Genre</p>
         <div v-for="genre in genres" :key="genre.genre_id">
             <input type="checkbox" name="checkbox" :value="genre.genre_id" v-model="genresInput">
@@ -55,6 +60,8 @@
     const tempatInput = ref([])
     const genresInput = ref([])
     const seriesSearch = ref([])
+    const sinopsisInput = ref('')
+    const judulInput = ref('')
     const searchInput=ref('')
     const id_input =  ref('')
     const series_id_input = 2
@@ -98,9 +105,22 @@
     async function UpdateData() {
         await UpdateDataGenre()
         await UpdateDataTempat()
+        await UpdateDataSeries()
 
-        id_input = ''
-        isEdting = false
+        id_input.value = ''
+        isEdting.value = false
+    }
+
+    async function UpdateDataSeries() {
+        const {error} = await supabase
+        .from('table_series')
+        .update({nama_series : judulInput.value, sinopsis : sinopsisInput})
+        .eq('series_id', id_input.value)
+
+        if(error){
+            console.error("Data Update failed:", error.message);
+            alert("Data Update failed");
+         }
     }
 
     async function UpdateDataTempat() {
@@ -136,7 +156,7 @@
                 }
             }
         }
-        tempatInput = []
+        tempatInput.value = []
         await FetchData()
     }
     async function UpdateDataGenre() {
@@ -170,59 +190,9 @@
                 }
             }
         }
-        genresInput = []
+        genresInput.value = []
         await FetchData()
     }
-
-    // delete function Dont un comment this
-//     async function DeleteDataGenre() {
-//     try {
-//         // Check if genresInput is valid
-//         if (!Array.isArray(genresInput.value) || genresInput.value.length === 0) {
-//             console.warn("No genres selected for deletion.");
-//             return; // Exit if no genres to delete
-//         }
-
-//         const genreFilter = genresInput.value
-
-//         // Fetch records where genre_id is not in the input and match the series_id
-//         const { data, error } = await supabase
-//             .from('table_series_genre')
-//             .select('genre_id') // Select genre_id instead of series_id
-//             .not('genre_id', 'in', genreFilter) // Ensure the column name is correct
-//             .eq('series_id', id_input); // Filter by series_id
-
-
-//         // Check for errors
-//         if (error) {
-//             console.error("Data selection failed:", error.message);
-//             alert("Data selection failed");
-//             return; // Exit the function on error
-//         }
-
-//         // Proceed to delete if any genres to remove
-//         if (data.length > 0) {
-//             const genreIdsToDelete = data.map(item => item.genre_id); // Use genre_id for deletion
-
-//             const { error: deleteError } = await supabase
-//                 .from('table_series_genre')
-//                 .delete()
-//                 .in('genre_id', genreIdsToDelete); // Deleting by genre_id
-
-//             if (deleteError) {
-//                 console.error("Data deletion failed:", deleteError.message);
-//                 alert("Data deletion failed");
-//             } else {
-//                 alert("Genres deleted successfully."); // Success message
-//             }
-//         } else {
-//             alert("No genres to delete for this series."); // Optional alert for clarity
-//         }
-//     } catch (error) {
-//         console.error("Error during deletion:", error);
-//         alert("An unexpected error occurred during deletion.");
-//     }
-// }
 
     //fetch Function
     async function FetchData() {
