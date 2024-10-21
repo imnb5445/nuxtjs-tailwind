@@ -23,6 +23,11 @@
             const {data, error} = await supabase.auth.signUp({
                 email: InputEmail.value,
                 password: InputPassword.value,
+                options: {
+                    data :{
+                        role : '1'
+                    }
+                }
             })
             if(error){
                 console.error("Error fetching data:", error.message);

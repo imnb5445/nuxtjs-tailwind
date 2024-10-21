@@ -9,9 +9,11 @@
         <form @submit.prevent="FetchSeries(show.series_id)">
             <input type="submit">
         </form>
+
+        <button @click="DeleteData(show.series_id)">Delete</button>
     </div>
 
-    <div v-if="isEdting">
+    <div v-if="isEditing">
         <form @submit.prevent="UpdateData" >
         <label for="JudulInput">Judul</label>
         <input type="text" name="JudulInput" v-model="judulInput">
@@ -36,10 +38,15 @@
     </div>
     
 
-    <form action="">
+    <form @submit.prevent="FetchDataFilter">
         <input type="text" v-model="searchInput" @input="SearchEventHandler">
+        <div  v-for="genre in genres" :key="genre.genre_id" >
+            <input type="checkbox" :value="genre.genre_id" v-model="filterGenre" name="FilterCheckbox">
+            <label for="FilterCheckbox">{{ genre.nama_genre }}</label>
+        </div>
+       <button type="submit">Filter</button>
     </form>
-    <div v-for="result in seriesSearch" :key="result.series_id">
+    <div v-for="result in seriesSearch" :key="result.series_id" @click="searchInput = result.nama_series">
         {{ result.nama_series }}
     </div>
 
@@ -47,6 +54,7 @@
     <p>{{ genre }}</p>
     <p>{{ genresInput }}</p>
     <p>{{ id_input }}</p>
+    <p>{{ test }}</p>
     <form action="">
         <input type="submit">
     </form>
@@ -60,6 +68,7 @@
     const tempatInput = ref([])
     const genresInput = ref([])
     const seriesSearch = ref([])
+    const filterGenre = ref([])
     const sinopsisInput = ref('')
     const judulInput = ref('')
     const searchInput=ref('')
@@ -67,9 +76,9 @@
     const series_id_input = 2
     const supabase = useSupabaseClient()
     const nama_series = ref('')
-    const test = [1, 2]
+    const test = searchInput.value.length
     const test2 = 2
-    const isEdting = ref(false)
+    const isEditing = ref(false)
     // Navigation
     function  SeriesGoTo(id){
         router.push({ name: 'series-id', params: { id } });
@@ -97,6 +106,20 @@
 
     }
 
+
+    //delete function
+    async function DeleteData(x){
+        const {error: deleteError} = await supabase
+            .from('table_series')
+            .delete()
+            .eq('series_id', x)
+            if(deleteError){
+            console.error("Data selection failed:", error.message);
+            alert("Data selection failed");
+            }
+
+            FetchData()
+    }
    
 
 
@@ -108,13 +131,13 @@
         await UpdateDataSeries()
 
         id_input.value = ''
-        isEdting.value = false
+        isEditing.value = false
     }
 
     async function UpdateDataSeries() {
         const {error} = await supabase
         .from('table_series')
-        .update({nama_series : judulInput.value, sinopsis : sinopsisInput})
+        .update({nama_series : judulInput.value, sinopsis : sinopsisInput.value})
         .eq('series_id', id_input.value)
 
         if(error){
@@ -202,6 +225,35 @@
         // .filter('table_genre.genre_id', 'in', test)
         series.value = data
     }
+        //filter function 
+    async function FetchDataFilter() {
+        console.log('this function is running')
+        let query = supabase
+        .from('table_series')
+        .select('series_id, nama_series, sinopsis, cover, table_genre!inner(*), table_tempat_tayang!inner(*) ')
+
+        if(searchInput.value.length > 1){
+            query = query.ilike('nama_series', `%${searchInput.value}%`);
+            console.log('filter nama')
+        }
+
+        // (note: ketika memfilter function ini mengngeluar kan semua series yang memiliki salah satu genre yang dipilig bukan kobinasi)
+        // if(filterGenre.value !=[]){
+        //     query = query.in('table_genre.genre_id', filterGenre.value)
+        //     console.log('filter genre')
+        // }
+
+        const {data, error} = await query
+
+        if(error){
+            console.error("Data selection failed:", error.message);
+            alert("Data selection failed");
+            return
+        }
+
+        console.log(data)
+        series.value = data
+    }
 
     async function FetchDataGenre() {
         const { data, error} = await supabase
@@ -225,7 +277,7 @@
         FetchSeriesGenre(x)
         FetchSeriesTempat(x)
         id_input.value = x
-        isEdting.value = true
+        isEditing.value = true
     }
 
     async function FetchSeriesGenre(x) {

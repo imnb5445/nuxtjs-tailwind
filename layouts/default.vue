@@ -11,14 +11,14 @@
     const route = useRoute()
     const CurrentUser = ref([])
 
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
-    console.log(event, session)
-    if (event === 'INITIAL_SESSION') {
-        // handle initial session
-    } else if (event === 'SIGNED_IN') {
-        window.location.href = '/';
-    }
-    })
+    // const { data } = supabase.auth.onAuthStateChange((event, session) => {
+    // console.log(event, session)
+    // if (event === 'INITIAL_SESSION') {
+    //     // handle initial session
+    // } else if (event === 'SIGNED_IN') {
+    //     window.location.href = '/';
+    // }
+    // })
 
     async function FetchDataUser() {
         const { data: { user: User } } = await supabase.auth.getUser()
