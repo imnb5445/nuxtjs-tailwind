@@ -24,6 +24,8 @@
             console.error("Error fetching data:", error.message);
             InputEmail.value =""
             InputPassword.value =""
+        } else{
+            window.location.href = '/';
         }
     }
 </script>

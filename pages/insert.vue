@@ -359,11 +359,12 @@
         .insert({nama_series: nama_series.value, sinopsis: sinopsis_input.value, cover: x})
         .select()
 
+        console.log(data)
         const seriesId = data[0].series_id;
         await InsertDataGenre(seriesId);
         await InsertDataTempat(seriesId)
         await InsertDataKarakter(seriesId)
-        await InsertDataEpisode(seriesId)
+        // await InsertDataEpisode(seriesId)
     }
 
     async function InsertNewGenre() {

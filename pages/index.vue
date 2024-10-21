@@ -199,7 +199,7 @@
 
         for(const genreData of genres.value){
             if(genresInput.value.includes(genreData.genre_id)){
-                console.log(genreData.genre_id)
+                console.log('a')
             }
             else{
                 const {error: deleteError} = await supabase
