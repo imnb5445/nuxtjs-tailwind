@@ -9,16 +9,23 @@
         <div v-for="episode in EpisodeList" :key="episode.episode_id">
             <p @click="EpisodeGoTo(episode.episode_id)">{{ episode.nama_episode }}</p>
         </div>
-    </div>    
+    </div> 
+    
+    <div v-for="pemain in KarakterList" :key="pemain.pemain_id" class="w-20 h-20 bg-cover">
+        <img :src="pemain.profile_pemain" alt="">
+        <p v-for="karakter in pemain.table_karakter">{{  karakter.nama_karakter }}</p>
+        <p>{{ pemain.nama_pemain }}</p>
+    </div>
 </template>
 
 <script setup>
     const route = useRoute()
     const router = useRouter()
     const supabase = useSupabaseClient()
-    const current_id = route.params.id
+    const current_id = route.params.series
     const SeriesDetail = ref([])
     const EpisodeList = ref([])
+    const KarakterList = ref([]) 
 
     function  EpisodeGoTo(id){
         router.push({ name: 'episode-id', params: { id } });
@@ -46,9 +53,23 @@
         EpisodeList.value = data
     }
 
+    async function FetchDataKarakter(){
+        const { data, error} = await supabase
+        .from('table_pemain')
+        .select('pemain_id, nama_pemain, profile_pemain, table_karakter!inner(*)')
+        .eq('table_karakter.series_id', current_id)
+
+        if(error){
+            console.log(error)
+        }
+
+        KarakterList.value = data
+    }
+
 
     onMounted(() =>{
         FetchDataSeries()
         FetchDataEpisode()
+        FetchDataKarakter()
     })
 </script>

@@ -17,17 +17,12 @@
     const InputEmail = ref('')
     const InputPassword = ref('')
     const MatchPassword = ref('')
-
+    
     async function SignUpUser() {
         if( InputPassword.value == MatchPassword.value){
             const {data, error} = await supabase.auth.signUp({
                 email: InputEmail.value,
                 password: InputPassword.value,
-                options: {
-                    data :{
-                        role : '1'
-                    }
-                }
             })
             if(error){
                 console.error("Error fetching data:", error.message);
@@ -35,10 +30,28 @@
                 InputPassword.value =""
                 MatchPassword.value = ""
             }else{
+                const userEmail = data.user.email
+                const UserId = data.user.id
+                addRole(UserId)
                 navigateTo('/')
             }
         }else{
             alert('Password does not match')
         }
     }
+
+    async function addRole(id) {
+        const { data, error } = await supabase
+        .from('table_user_role')
+        .insert({ user_id: id, email: InputEmail.value})
+        if(error){
+                console.error("Error fetching data:", error.message);
+                InputEmail.value =""
+                InputPassword.value =""
+                MatchPassword.value = ""
+            }else{
+                navigateTo('/')
+            }
+    }
+
 </script>

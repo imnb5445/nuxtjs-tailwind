@@ -1,40 +1,136 @@
+<style>
+
+    /* table */
+    .table_data  th{
+        background-color: black;
+        color: rgb(236, 235, 235);
+    }
+    .table_data  td, th{ 
+    border: 1px solid black;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    max-width: 25rem;
+    min-width: fit-content;
+    }
+    .table_data  .item-sinopsis{
+        width: 100%;
+        max-width: 20rem;
+        max-height: 6rem;
+        overflow-y: scroll;
+    }
+
+    /* edit */
+    .edit_panel-container{
+        position: fixed;
+        display: flex;
+        justify-content: end;
+        top: 0;
+        right: 0;
+        background-color: rgba(196, 196, 196, 0.755);
+        height: 100%;
+        width: 100%;
+    }
+    .edit_panel{
+        background-color: white;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        padding-top: 5rem;
+        padding-bottom: 3rem;
+        overflow-y: scroll;
+        overflow-x: hidden;
+        height: 100%;
+        width: 20rem;
+        z-index: 1;
+
+    }
+
+    .input_text{
+        display: flex;
+        flex-direction: column;
+    }
+
+    .input_text-form{
+        background-color: rgb(249, 246, 246);
+        border: 1px solid black;
+        border-radius: 0.5rem 0.5rem 0 0.5rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        padding-top: 0.4rem;
+        padding-bottom: 0.4rem
+    }
+
+    
+
+
+
+
+</style>
+
 <template>
-    <div v-for="show in series" :key="show.series_id">
-        <p>{{ show.nama_series }}</p>
-        <p>{{ show.sinopsis }}</p>
-        <p></p>
-        <img :src="show.cover" alt="" class="w-20 h-20 bg-cover" @click="SeriesGoTo(show.series_id)">
-        <p v-for=" genre in show.table_genre">{{ genre.nama_genre }}</p>
-        <p v-for=" tempat in show.table_tempat_tayang">{{ tempat.nama_tempat_tayang }}</p>
-        <form @submit.prevent="FetchSeries(show.series_id)">
+    
+    <table class="table_data">
+        <tr>
+            <th>Judul</th>
+            <th>Sinopsis</th>
+            <th>Cover</th>
+            <th>Genre</th>
+            <th>Tempat Tayang</th>
+            <th>Tools</th>
+        </tr>
+        <tr v-for="show in series" :key="show.series_id">
+            <td><p>{{ show.nama_series }}</p></td>
+            <td> <div class="item-sinopsis"> {{ show.sinopsis }} </div></td>
+            <td><img :src="show.cover" alt="" class="w-20 h-20 bg-cover" @click="SeriesGoTo(show.series_id)"></td>
+            <td><p v-for=" genre in show.table_genre">{{ genre.nama_genre }}</p></td>
+            <td><p v-for=" tempat in show.table_tempat_tayang">{{ tempat.nama_tempat_tayang }}</p></td>
+            <td><form @submit.prevent="FetchSeries(show.series_id, show.nama_series, show.sinopsis, show.cover)">
             <input type="submit">
         </form>
 
-        <button @click="DeleteData(show.series_id)">Delete</button>
-    </div>
+        <button @click="DeleteData(show.series_id)">Delete</button></td>
+        </tr>
+    </table>
 
-    <div v-if="isEditing">
-        <form @submit.prevent="UpdateData" >
-        <label for="JudulInput">Judul</label>
-        <input type="text" name="JudulInput" v-model="judulInput">
-
-        <textarea name="sinopsis" v-model="sinopsisInput"></textarea>
-
-        <p>Genre</p>
-        <div v-for="genre in genres" :key="genre.genre_id">
-            <input type="checkbox" name="checkbox" :value="genre.genre_id" v-model="genresInput">
-            <label for="checkbox">{{ genre.nama_genre }}</label>
-           
+    <div class="edit_panel-container" v-if="isEditing" >
+        <div  class="edit_panel">
+            <img src="" alt="" class="close-panel">
+            <form @submit.prevent="UpdateData" >
+                <div class="input_text">
+                    <label for="JudulInput" class="input_text-title">Judul</label>
+                    <input type="text" name="JudulInput" v-model="judulInput" class="input_text-form">
+                </div>
+            
+                <div class="input_text">
+                    <label for="sinopsis" class="input_text-title">Sinopsis</label>
+                    <textarea name="sinopsis" v-model="sinopsisInput" class="input_text-form"></textarea>
+                </div>
+            
+                <div class="input_checkbox">
+                    <p class="input_checkbox-title">Genre</p>
+                    <div v-for="genre in genres" :key="genre.genre_id" class="input_checkbox-form">
+                        <input type="checkbox" name="checkbox" :value="genre.genre_id" v-model="genresInput" class="option-checkbox">
+                        <label for="checkbox" class="option-title">{{ genre.nama_genre }}</label>
+                    </div>
+                </div>
+            
+                <div class="input_checkbox">
+                    <p class="input_checkbox-title">Tempat Tayang</p>
+                    <div v-for=" tempat in tempatTayang" :key="tempat.tempat_tayang_id" class="input_checkbox-form">
+                        <input type="checkbox" name="checkbox" :value="tempat.tempat_tayang_id" v-model="tempatInput" class="option-checkbox">
+                        <label for="checkbox" class="option-title">{{ tempat.nama_tempat_tayang }}</label>
+                    </div>
+                </div>
+                
+                <div class="input_file">
+                    <p class="input_file-title">cover</p>
+                    <input class="input_file-button" type="file" accept="image/png, image/jpeg" @change="handleFileChange">
+                </div>
+                
+                <input type="submit">
+            </form>
         </div>
-
-        <p>Tempat Tayang</p>
-        <div v-for=" tempat in tempatTayang" :key="tempat.tempat_tayang_id">
-            <input type="checkbox" name="checkbox" :value="tempat.tempat_tayang_id" v-model="tempatInput">
-            <label for="checkbox">{{ tempat.nama_tempat_tayang }}</label>
-           
-        </div>
-        <input type="submit">
-    </form>
     </div>
     
 
@@ -49,41 +145,57 @@
     <div v-for="result in seriesSearch" :key="result.series_id" @click="searchInput = result.nama_series">
         {{ result.nama_series }}
     </div>
-
-
-    <p>{{ genre }}</p>
-    <p>{{ genresInput }}</p>
-    <p>{{ id_input }}</p>
-    <p>{{ test }}</p>
+ 
     <form action="">
         <input type="submit">
     </form>
 </template>
 
 <script setup>
+
     const router = useRouter()
     const series = ref([])
     const genres = ref([])
     const tempatTayang = ref([])
     const tempatInput = ref([])
     const genresInput = ref([])
+    const url_input = ref('')
     const seriesSearch = ref([])
     const filterGenre = ref([])
     const sinopsisInput = ref('')
     const judulInput = ref('')
     const searchInput=ref('')
     const id_input =  ref('')
-    const series_id_input = 2
+    const selected_img=ref('')
+    const img_name = ref('')
+    const imagePreview = ref('')
     const supabase = useSupabaseClient()
     const nama_series = ref('')
     const test = searchInput.value.length
-    const test2 = 2
+    var fileIsChange = false
     const isEditing = ref(false)
     // Navigation
     function  SeriesGoTo(id){
         router.push({ name: 'series-id', params: { id } });
     }
     // Event handeling
+    const handleFileChange = (event) => {
+        const file = event.target.files[0];
+            if (file) {
+                selected_img.value = file;
+                img_name.value = file.name;
+                fileIsChange = true
+
+
+                // Create a preview URL
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                imagePreview.value = e.target.result; // Set the preview URL
+                };
+                reader.readAsDataURL(file); // Read the file as a data URL
+            }
+    };
+
     async function SearchEventHandler(event){
 
         if(searchInput.value.length < 2){
@@ -106,6 +218,17 @@
 
     }
 
+    async function closePanel() {
+        id_input.value = ''
+        judulInput.value = ''
+        sinopsisInput.value = ''
+        genresInput.value = []
+        tempatInput.value = []
+        url_input.value = ''
+        isEditing.value = false
+        fileIsChange = false
+    }
+
 
     //delete function
     async function DeleteData(x){
@@ -121,23 +244,60 @@
             FetchData()
     }
    
+    //insert function
+    async function InsertBucketTumbnail(){
+        if (selected_img.value) {
+            const { data, error } = await supabase.storage
+            .from('series_tumbnail')
+            .upload(`uploads/${selected_img.value.name}`, selected_img.value, {
+                cacheControl: '3600',
+                upsert: false,
+            });
+
+            if (error) {
+            console.error('Error uploading file:', error);
+            alert('Upload failed. Please try again.');
+            } else {
+            console.log('File uploaded successfully:', data);
+            alert('File uploaded successfully!');
+
+            FetchUrl()
+           
+            }
+        } else {
+            alert('Please select a file to upload.');
+        }
+    }
 
 
     //update function
 
     async function UpdateData() {
+        if(id_input.value == '' && judulInput.value == '' && sinopsisInput.value == '' && genresInput.value == null && tempatInput.value == null && url_input.value == null){
+            alert('please fill out all the form')
+            return 
+        }
+
         await UpdateDataGenre()
         await UpdateDataTempat()
-        await UpdateDataSeries()
+
+        if(fileIsChange){
+            await InsertBucketTumbnail()
+        }
+        else{
+            await UpdateDataSeries()
+        }
+        
 
         id_input.value = ''
         isEditing.value = false
+        fileIsChange = false
     }
 
     async function UpdateDataSeries() {
         const {error} = await supabase
         .from('table_series')
-        .update({nama_series : judulInput.value, sinopsis : sinopsisInput.value})
+        .update({nama_series : judulInput.value, sinopsis : sinopsisInput.value, cover : url_input.value})
         .eq('series_id', id_input.value)
 
         if(error){
@@ -218,6 +378,17 @@
     }
 
     //fetch Function
+
+    async function FetchUrl() {
+        const { data } = supabase.storage
+                .from('series_tumbnail')
+                .getPublicUrl(`uploads/${selected_img.value.name}`); //the img url return ass null
+
+            // Now insert the series data
+            url_input.value = data.publicUrl
+            await UpdateDataSeries();
+    }
+
     async function FetchData() {
         const { data, error} = await supabase
         .from('table_series')
@@ -273,10 +444,13 @@
 
     }
 
-    async function FetchSeries(x){
-        FetchSeriesGenre(x)
-        FetchSeriesTempat(x)
-        id_input.value = x
+    async function FetchSeries(id, judul, sinopsis, cover){
+        FetchSeriesGenre(id)
+        FetchSeriesTempat(id)
+        id_input.value = id
+        judulInput.value = judul
+        sinopsisInput.value = sinopsis
+        url_input.value = cover
         isEditing.value = true
     }
 

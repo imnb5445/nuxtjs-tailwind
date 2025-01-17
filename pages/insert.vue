@@ -2,7 +2,7 @@
     <form @submit.prevent="InsertData">
         <input type="text" v-model="nama_series">
         <input type="text" v-model="sinopsis_input">
-       <input type="file" accept="image/png, image/jpeg" @change="handleFileChange">
+       <input type="file" accept="image/png, image/jpeg, image/jpg" @change="handleFileChange">
        <img v-if="imagePreview" :src="imagePreview" alt="Image Preview" class="w-20 h-20 bg-cover"/>
         <p>Tempat tayang</p>
         <div v-for="tempat in tempatTayang">
@@ -56,15 +56,17 @@
     </form>
     
 
-    <button @click="SignOutUser">Log Out</button>
+    
     <p>{{ genresInput }}</p>
     <p>{{ tempatTayangInput }}</p>
     <p>{{ selected_img }}</p>
     <p>{{ nama_karakter }}</p>
     <p>{{ pemain_karakter }}</p>
+    <p>{{ role }}</p>
 </template>
 
 <script setup>
+
     const supabase = useSupabaseClient()
     const tempatTayang = ref([])
     const tempatTayangInput = ref([])
@@ -89,12 +91,40 @@
     const profilePreview = ref('')
     const img_name = ref('')
     const nama_series = ref('')
+    const CurrentUser = ref([])
+    const role = ref('')
 
-    async function SignOutUser() {
-        const { error } = await supabase.auth.signOut()
-        reloadNuxtApp()
+    async function FetchDataUser() {
+        const { data: { user: User } } = await supabase.auth.getUser()
+        CurrentUser.value = User
+ 
+        if(!CurrentUser.value){
+            navigateTo('/')
+        }
+        const UserId = User.id
+        FetchUserRole(UserId)
     }
 
+    async function FetchUserRole(id) {
+        const {data} = await supabase
+        .from('table_user_role')
+        .select('*, table_role!inner(*)')
+        .eq('user_id', id)
+        .eq('table_role.nama_role', 'admin')
+
+        const UserRole = data[0].table_role.nama_role
+        role.value = UserRole
+
+        console.log(role.value)
+        if(role.value !== 'admin'){
+            navigateTo('/')
+        }
+
+
+    }
+
+
+    
     //Event Handler
     const handleFileVideoChange = (event) => {
         const file = event.target.files[0];
@@ -359,7 +389,6 @@
         .insert({nama_series: nama_series.value, sinopsis: sinopsis_input.value, cover: x})
         .select()
 
-        console.log(data)
         const seriesId = data[0].series_id;
         await InsertDataGenre(seriesId);
         await InsertDataTempat(seriesId)
@@ -378,6 +407,7 @@
         FetchDataPemain()
         FecthDataGenre()
         FecthDataTempatTayang()
+        FetchDataUser()
     })
         
     
