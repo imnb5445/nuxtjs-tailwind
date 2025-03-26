@@ -11,6 +11,10 @@ export default defineNuxtConfig({
     redirect: false
   },
 
-  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/supabase'],
-  compatibilityDate: '2024-09-13',
+  modules: [
+    '@nuxtjs/tailwindcss',
+    '@nuxtjs/supabase',
+    '@nuxt/scripts',
+  ],
+  compatibilityDate: '2024-11-07',
 });

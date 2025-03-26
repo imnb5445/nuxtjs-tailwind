@@ -2,22 +2,9 @@
     <form @submit.prevent="InsertData">
         <input type="text" v-model="nama_series">
         <input type="text" v-model="sinopsis_input">
-       <input type="file" accept="image/png, image/jpeg" @change="handleFileChange">
+       <input type="file" accept="image/png, image/jpeg, image/jpg" @change="handleFileChange">
        <img v-if="imagePreview" :src="imagePreview" alt="Image Preview" class="w-20 h-20 bg-cover"/>
-        <p>Genre</p>
-       
-        <div v-for="(karakter, index) in nama_karakter" :key="index">
-            <input type="text" class="input_nama_karakter" v-model="nama_karakter[index]">
-            <input type="text" class="input_nama_karakter">
-            <select name="pemain" id="selectTest"  v-model="pemain_karakter[index]">
-                <option value="" disabled selected>Choose An Actor/Actress</option>
-                <option v-for="pemain in total_pemain" v-bind:value="pemain.pemain_id" :placeholder="'Input ' + (index + 1)">{{ pemain.nama_pemain }} </option>
-            </select>
-            <select name="awda" id="awda">
-                <option value="awda">dwadawda</option>
-            </select>
-        </div>
-        
+        <p>Tempat tayang</p>
         <div v-for="tempat in tempatTayang">
             <input type="checkbox" name="checkbox" class="input_checkbox"   v-model="tempatTayangInput" :value="tempat.tempat_tayang_id">
             <label for="checkbox">{{ tempat.nama_tempat_tayang }}</label>
@@ -29,20 +16,57 @@
             <label for="checkbox">{{ genre.nama_genre }}</label>
 
         </div>
+
+        <div v-for="(karakter, index) in nama_karakter" :key="index">
+            <input type="text" class="input_nama_karakter" v-model="nama_karakter[index]">
+            <select name="pemain" id="selectTest"  v-model="pemain_karakter[index]">
+                <option value="" disabled selected>Choose An Actor/Actress</option>
+                <option v-for="pemain in total_pemain" v-bind:value="pemain.pemain_id" :placeholder="'Input ' + (index + 1)">{{ pemain.nama_pemain }} </option>
+            </select>
+        </div>
+
+        <div v-for="(episode, index) in nama_episode" :key="index">
+            <input type="text" class="input_nama_karakter" v-model="nama_episode[index]">
+            <input type="url" class="input_nama_karakter" v-model="episode_url[index]">
+            
+        </div>
+        <input type="submit">
+    </form>
+
+    <div>
+    <button @click="removeInputKarakter(index)" class="bg-black text-white m-5 p-3">Remove Karakter</button>
+    <button @click="addInputKarakter" class="bg-black text-white m-5 p-3">Add Karakter</button>
+    </div>
+    
+
+    <button @click="removeInputEpisode(index)" class="bg-black text-white m-5 p-3">Remove episode</button>
+    <button @click="addInputepisode" class="bg-black text-white m-5 p-3">Add episode</button>
+
+    <!-- insert Pemain -->
+    <form @submit.prevent="InsertBucketProfile">
+        <input type="text" v-model="namaPemain">
+        <input type="file" accept="image/png, image/jpeg" @change="handleFileProfileChange">
+        <img v-if="profilePreview" :src="profilePreview" alt="Image Preview" class="w-20 h-20 bg-cover"/>
+        <input type="submit">
+    </form>
+
+    <form @submit.prevent="InsertNewGenre">
+        <input type="text">
         <input type="submit">
     </form>
     
 
-    <button @click="removeInput(index)" class="bg-black text-white">Remove</button>
-    <button @click="addInput" class="bg-black">Add Input</button>
+    
     <p>{{ genresInput }}</p>
     <p>{{ tempatTayangInput }}</p>
     <p>{{ selected_img }}</p>
     <p>{{ nama_karakter }}</p>
     <p>{{ pemain_karakter }}</p>
+    <p>{{ role }}</p>
 </template>
 
 <script setup>
+
     const supabase = useSupabaseClient()
     const tempatTayang = ref([])
     const tempatTayangInput = ref([])
@@ -51,14 +75,87 @@
     const total_pemain = ref([])
     const pemain_karakter = ref([])
     const nama_karakter = ref([])
+    const nama_episode = ref([])
+    const episode_url = ref([])
+    const selectedVideo = ref('')
+    const videoName = ref('')
+    const videoPreview = ref('')
+    const AddGenre = ref('')
+    const namaPemain = ref('')
     const imgurl= ref('')
     const imagePreview = ref('')
     const selected_img = ref('')
     const sinopsis_input = ref('')
+    const selectedProfile = ref('')
+    const profileName = ref('')
+    const profilePreview = ref('')
     const img_name = ref('')
     const nama_series = ref('')
+    const CurrentUser = ref([])
+    const role = ref('')
 
+    async function FetchDataUser() {
+        const { data: { user: User } } = await supabase.auth.getUser()
+        CurrentUser.value = User
+ 
+        if(!CurrentUser.value){
+            navigateTo('/')
+        }
+        const UserId = User.id
+        FetchUserRole(UserId)
+    }
+
+    async function FetchUserRole(id) {
+        const {data} = await supabase
+        .from('table_user_role')
+        .select('*, table_role!inner(*)')
+        .eq('user_id', id)
+        .eq('table_role.nama_role', 'admin')
+
+        const UserRole = data[0].table_role.nama_role
+        role.value = UserRole
+
+        console.log(role.value)
+        if(role.value !== 'admin'){
+            navigateTo('/')
+        }
+
+
+    }
+
+
+    
     //Event Handler
+    const handleFileVideoChange = (event) => {
+        const file = event.target.files[0];
+            if (file) {
+                selectedVideo.value = file;
+                videoName.value = file.name;
+
+                // Create a preview URL
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                videoPreview.value = e.target.result; // Set the preview URL
+                };
+                reader.readAsDataURL(file); // Read the file as a data URL
+            }
+    };
+
+    const handleFileProfileChange = (event) => {
+        const file = event.target.files[0];
+            if (file) {
+                selectedProfile.value = file;
+                profileName.value = file.name;
+
+                // Create a preview URL
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                profilePreview.value = e.target.result; // Set the preview URL
+                };
+                reader.readAsDataURL(file); // Read the file as a data URL
+            }
+    };
+
     const handleFileChange = (event) => {
         const file = event.target.files[0];
             if (file) {
@@ -74,16 +171,36 @@
             }
     };
 
-    const addInput = () => {
+    const addInputKarakter = () => {
         nama_karakter.value.push(''); // Add a new empty string for the new input
     };
 
-    const removeInput = () => {
+    const removeInputKarakter = () => {
+        let panjang = nama_karakter.value.length
         if (nama_karakter.value.length > 0) {
         nama_karakter.value.pop(); // Remove the last character name
-        pemain_karakter.value.pop(); // Remove the last player selection
+        if (pemain_karakter.value[panjang]) {
+            pemain_karakter.value.pop(); // Remove the last player selection
+        }
+        
     }
     };
+
+    const addInputepisode = () => {
+        nama_episode.value.push(''); // Add a new empty string for the new input
+        episode_url.value.push('')
+    };
+
+    const removeInputEpisode = () => {
+        
+        if (nama_karakter.value.length > 0) {
+        nama_episode.value.pop(); // Remove the last character name
+       episode_url.value.pop()
+    }
+    };
+
+
+    
 
     //Select Function
     async function FecthDataGenre() {
@@ -120,9 +237,43 @@
             await InsertDataSeries(data.publicUrl);
     }
 
+    async function FetchUrlProfile() {
+        const { data } = supabase.storage
+                .from('series_tumbnail')
+                .getPublicUrl(`profile/${selectedProfile.value.name}`); //the img url return ass null
+
+            // Now insert the series data
+            console.log(data)
+            await InsertDataActor(data.publicUrl);
+    }
+
   
 
     //Insert Function
+    async function InsertBucketEpisode(){
+        if (selectedVideo.value) {
+            const { data, error } = await supabase.storage
+            .from('Video_Bucket')
+            .upload(`Episode/${selectedVideo.value.name}`, selectedVideo.value, {
+                cacheControl: '3600',
+                upsert: false,
+            });
+
+            if (error) {
+            console.error('Error uploading file:', error);
+            alert('Upload failed. Please try again.');
+            } else {
+            console.log('File uploaded successfully:', data);
+            alert('File uploaded successfully!');
+
+            // FetchUrl()
+           
+            }
+        } else {
+            alert('Please select a file to upload.');
+        }
+    }
+
     async function InsertBucketTumbnail(){
         if (selected_img.value) {
             const { data, error } = await supabase.storage
@@ -146,6 +297,44 @@
             alert('Please select a file to upload.');
         }
     }
+
+    async function InsertBucketProfile(){
+        if (selectedProfile.value) {
+            const { data, error } = await supabase.storage
+            .from('series_tumbnail')
+            .upload(`profile/${selectedProfile.value.name}`, selectedProfile.value, {
+                cacheControl: '3600',
+                upsert: false,
+            });
+
+            if (error) {
+            console.error('Error uploading file:', error);
+            alert('Upload failed. Please try again.');
+            } else {
+            console.log('File uploaded successfully:', data);
+            alert('File uploaded successfully!');
+
+            FetchUrlProfile()
+            }
+        } else {
+            alert('Please select a file to upload.');
+        }
+    }
+
+    async function InsertDataActor(x){
+        const {error} = await supabase
+        .from('table_pemain')
+        .insert({nama_pemain : namaPemain.value, profile_pemain : x})
+
+        if(error){
+            console.error("Error insert data:", error.message);
+            seriesSearch.value = []; // Clear results on error
+        }
+        else{
+            seriesSearch.value = data
+        }
+    }
+
     async function InsertData() {
         await InsertBucketTumbnail();
     }
@@ -184,6 +373,16 @@
         }
     }
 
+    async function InsertDataEpisode(SeriesId) {
+        const jumlah_episode = nama_episode.value.length
+        for( let i = 0; i < jumlah_episode; i++){
+            const {error} = await supabase
+            .from('table_episode')
+            .insert({nama_episode: nama_episode.value[i], episode_url: episode_url.value[i], series_id: SeriesId})
+            console.log
+        }
+    }
+
     async function InsertDataSeries( x ) {
         const { data, error} = await supabase
         .from('table_series')
@@ -194,6 +393,13 @@
         await InsertDataGenre(seriesId);
         await InsertDataTempat(seriesId)
         await InsertDataKarakter(seriesId)
+        // await InsertDataEpisode(seriesId)
+    }
+
+    async function InsertNewGenre() {
+        const {data, error} = await supabase
+        .from('table_genre')
+        .upsert({nama_genre : AddGenre.value})
     }
 
 
@@ -201,6 +407,7 @@
         FetchDataPemain()
         FecthDataGenre()
         FecthDataTempatTayang()
+        FetchDataUser()
     })
         
     
